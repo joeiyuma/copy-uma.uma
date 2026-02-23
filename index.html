@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>📋 テキスト & ファイル保存（クラウド共有）</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{
+  font-family:'Segoe UI','Hiragino Sans','Meiryo',sans-serif;
+  min-height:100vh;
+  background:linear-gradient(135deg,#667eea 0%,#764ba2 50%,#f093fb 100%);
+  display:flex;flex-direction:column;align-items:center;
+  padding:40px 20px;
+}
+h1{color:#fff;font-size:2rem;margin-bottom:8px;text-shadow:0 2px 10px rgba(0,0,0,.2);}
+.subtitle{color:rgba(255,255,255,.85);font-size:.95rem;margin-bottom:30px;text-align:center;}
+.container{width:100%;max-width:720px;display:flex;flex-direction:column;gap:20px;}
+.share-card{
+  background:rgba(255,255,255,.95);border-radius:20px;padding:20px 24px;
+  box-shadow:0 8px 32px rgba(0,0,0,.15);backdrop-filter:blur(10px);
+}
+.share-label{font-size:.85rem;color:#999;margin-bottom:8px;font-weight:600;}
+.share-url-row{display:flex;gap:8px;align-items:center;}
+.share-url-input{
+  flex:1;padding:10px 14px;border:2px solid #e0e0e0;border-radius:12px;
+  font-size:.85rem;font-family:inherit;color:#333;background:#f8f8ff;
+}
+.share-url-input:focus{outline:none;border-color:#667eea;}
+.global-actions{display:flex;gap:10px;flex-wrap:wrap;}
+.global-btn{
+  flex:1;min-width:120px;padding:14px 20px;border:none;border-radius:16px;
+  font-size:1rem;font-weight:700;cursor:pointer;transition:all .3s;
+  display:flex;align-items:center;justify-content:center;gap:6px;
+  -webkit-tap-highlight-color:transparent;
+}
+.global-btn-save{background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;box-shadow:0 4px 15px rgba(102,126,234,.3);}
+.global-btn-load{background:linear-gradient(135deg,#43e97b,#38f9d7);color:#1a5c3a;box-shadow:0 4px 15px rgba(67,233,123,.3);}
+.global-btn-url{background:linear-gradient(135deg,#ffa751,#ffe259);color:#7a5600;box-shadow:0 4px 15px rgba(255,167,81,.3);}
+.global-btn:hover{transform:translateY(-2px);}
+.global-btn:active{transform:translateY(0);}
+.global-btn:disabled{opacity:.6;transform:none;cursor:not-allowed;}
+.status{text-align:center;font-size:.8rem;color:rgba(255,255,255,.7);margin-top:-10px;}
+.card{
+  background:rgba(255,255,255,.95);border-radius:20px;padding:28px;
+  box-shadow:0 8px 32px rgba(0,0,0,.15);backdrop-filter:blur(10px);transition:transform .2s;
+}
+.card:hover{transform:translateY(-2px);}
+.card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
+.card-title{font-size:1.1rem;font-weight:700;}
+.badge{
+  background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;
+  font-size:.75rem;padding:4px 12px;border-radius:20px;font-weight:600;
+}
+textarea{
+  width:100%;min-height:160px;border:2px solid #e0e0e0;border-radius:14px;
+  padding:16px;font-size:1rem;font-family:inherit;resize:vertical;
+  transition:border-color .3s,box-shadow .3s;line-height:1.7;color:#333;
+  white-space:pre-wrap;word-wrap:break-word;
+}
+textarea:focus{outline:none;border-color:#667eea;box-shadow:0 0 0 4px rgba(102,126,234,.15);}
+.slot-label{display:inline-block;font-size:.8rem;color:#999;margin-bottom:8px;}
+.btn-group{display:flex;gap:10px;margin-top:16px;flex-wrap:wrap;}
+.btn{
+  flex:1;min-width:100px;padding:13px 20px;border:none;border-radius:14px;
+  font-size:.95rem;font-weight:700;cursor:pointer;transition:all .3s;
+  display:flex;align-items:center;justify-content:center;gap:6px;
+  -webkit-tap-highlight-color:transparent;
+}
+.btn-copy{background:linear-gradient(135deg,#43e97b,#38f9d7);color:#1a5c3a;box-shadow:0 4px 15px rgba(67,233,123,.3);}
+.btn-add{background:linear-gradient(135deg,#f093fb,#f5576c);color:#fff;box-shadow:0 4px 15px rgba(240,147,251,.3);}
+.btn-delete{background:linear-gradient(135deg,#ff6b6b,#ee5a24);color:#fff;box-shadow:0 4px 15px rgba(255,107,107,.3);flex:0;min-width:50px;padding:13px 16px;}
+.btn-file{background:linear-gradient(135deg,#ffa751,#ffe259);color:#7a5600;box-shadow:0 4px 15px rgba(255,167,81,.3);}
+.btn:hover{transform:translateY(-2px);}
+.btn:active{transform:translateY(0);}
+.drop-zone{
+  margin-top:14px;border:2px dashed #ccc;border-radius:14px;padding:22px;
+  text-align:center;color:#999;font-size:.9rem;transition:all .3s;cursor:pointer;
+}
+.drop-zone.drag-over{border-color:#667eea;background:rgba(102,126,234,.06);color:#667eea;}
+.file-list{display:flex;flex-direction:column;gap:10px;margin-top:14px;}
+.file-item{
+  display:flex;align-items:center;gap:12px;background:#f8f8ff;
+  border-radius:12px;padding:12px 16px;transition:background .2s;flex-wrap:wrap;
+}
+.file-item:hover{background:#eef0ff;}
+.file-icon{font-size:1.6rem;flex-shrink:0;}
+.file-info{flex:1;min-width:0;}
+.file-name{font-weight:600;font-size:.9rem;color:#333;word-break:break-all;}
+.file-size{font-size:.75rem;color:#999;}
+.file-preview{max-width:100%;max-height:180px;border-radius:10px;margin-top:8px;object-fit:contain;}
+.file-actions{display:flex;gap:6px;flex-shrink:0;flex-wrap:wrap;}
+.file-btn{
+  padding:8px 14px;border:none;border-radius:10px;font-size:.8rem;
+  font-weight:700;cursor:pointer;transition:all .2s;-webkit-tap-highlight-color:transparent;
+}
+.file-btn-dl{background:linear-gradient(135deg,#43e97b,#38f9d7);color:#1a5c3a;}
+.file-btn-photo{background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;}
+.file-btn-del{background:linear-gradient(135deg,#ff6b6b,#ee5a24);color:#fff;}
+.file-btn:hover{transform:translateY(-1px);}
+.toast{
+  position:fixed;bottom:30px;left:50%;
+  transform:translateX(-50%) translateY(100px);
+  background:rgba(0,0,0,.85);color:#fff;padding:14px 28px;
+  border-radius:14px;font-size:.95rem;font-weight:600;
+  opacity:0;transition:all .4s cubic-bezier(.68,-.55,.27,1.55);
+  z-index:1000;pointer-events:none;
+}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+@media(max-width:500px){
+  h1{font-size:1.5rem;}.card{padding:20px;}.btn{padding:11px 14px;font-size:.85rem;}
+  .file-actions{width:100%;justify-content:flex-start;margin-top:8px;}
+  .global-btn{min-width:100px;padding:12px 14px;font-size:.9rem;}
+}
+</style>
+</head>
+<body>
+
+<h1>📋 テキスト & ファイル保存</h1>
+<p class="subtitle">☁️ クラウド共有対応 — URLを共有するだけで複数端末で同期</p>
+
+<div class="container">
+  <!-- 共有URL & グローバルボタン -->
+  <div class="share-card">
+    <div class="share-label">🔗 共有URL（このURLを他の端末で開くと同じ内容が見られます）</div>
+    <div class="share-url-row">
+      <input type="text" class="share-url-input" id="share-url" readonly>
+      <button class="global-btn global-btn-url" onclick="copyShareUrl()" style="flex:0;min-width:auto;padding:10px 16px;font-size:.85rem;">📋 コピー</button>
+    </div>
+  </div>
+  <div class="global-actions">
+    <button class="global-btn global-btn-save" id="btn-cloud-save" onclick="handleCloudSave()">💾 保存（共有）</button>
+    <button class="global-btn global-btn-load" id="btn-cloud-load" onclick="handleCloudLoad()">🔄 最新を読み込み</button>
+  </div>
+  <div class="status" id="status"></div>
+  <div id="app"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+<textarea id="copy-helper" style="position:fixed;top:-9999px;left:-9999px;opacity:0;"></textarea>
+
+<script>
+/* ========== 設定 ========== */
+var API = 'https://jsonblob.com/api/jsonBlob';
+var LOCAL_TEXT = 'cloud_saver_texts';
+var LOCAL_FILE = 'cloud_saver_files';
+
+/* ========== ルームID管理 ========== */
+function getRoomId(){ return location.hash.slice(1) || ''; }
+function setRoomId(id){ location.hash = id; updateShareUrl(); }
+
+/* ========== 共有URL ========== */
+function updateShareUrl(){
+  var el = document.getElementById('share-url');
+  if(el) el.value = location.href;
+}
+function copyShareUrl(){
+  var url = location.href;
+  if(navigator.clipboard && window.isSecureContext){
+    navigator.clipboard.writeText(url).then(function(){ showToast('🔗 URLをコピーしました！'); });
+  } else {
+    var el = document.getElementById('share-url');
+    el.select(); el.setSelectionRange(0,9999);
+    try{ document.execCommand('copy'); showToast('🔗 URLをコピーしました！'); }
+    catch(e){ showToast('⚠️ 手動でコピーしてください'); }
+  }
+}
+
+/* ========== ローカルストレージ（キャッシュ） ========== */
+function loadTexts(){ try{ return JSON.parse(localStorage.getItem(LOCAL_TEXT))||['']; }catch(e){ return ['']; } }
+function saveTexts(t){ localStorage.setItem(LOCAL_TEXT, JSON.stringify(t)); }
+function loadFiles(){ try{ return JSON.parse(localStorage.getItem(LOCAL_FILE))||[[]]; }catch(e){ return [[]]; } }
+function saveFiles(f){ localStorage.setItem(LOCAL_FILE, JSON.stringify(f)); }
+
+/* ========== ステータス表示 ========== */
+function setStatus(msg){ document.getElementById('status').textContent = msg; }
+
+/* ========== クラウド保存 ========== */
+async function handleCloudSave(){
+  var btn = document.getElementById('btn-cloud-save');
+  btn.disabled = true; btn.textContent = '💾 保存中...';
+  setStatus('');
+
+  /* textarea の最新値をローカルに反映 */
+  var texts = loadTexts();
+  for(var i=0; i<texts.length; i++){
+    var ta = document.getElementById('slot-'+i);
+    if(ta) texts[i] = ta.value;
+  }
+  saveTexts(texts);
+
+  var data = { texts: texts, files: loadFiles(), updatedAt: new Date().toISOString() };
+  var roomId = getRoomId();
+
+  try {
+    if(roomId){
+      var res = await fetch(API + '/' + roomId, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+      if(!res.ok) throw new Error('HTTP ' + res.status);
+      showToast('☁️ クラウドに保存しました！');
+    } else {
+      var res = await fetch(API, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+      if(!res.ok) throw new Error('HTTP ' + res.status);
+      var loc = res.headers.get('Location') || '';
+      var newId = loc.split('/').pop();
+      if(!newId) throw new Error('IDを取得できませんでした');
+      setRoomId(newId);
+      showToast('☁️ 共有スペースを作成しました！URLをコピーして共有できます');
+    }
+    setStatus('最終保存: ' + new Date().toLocaleString('ja-JP'));
+  } catch(e) {
+    showToast('⚠️ 保存失敗: ' + e.message);
+    setStatus('保存エラー');
+  }
+  btn.disabled = false; btn.textContent = '💾 保存（共有）';
+}
+
+/* ========== クラウド読み込み ========== */
+async function handleCloudLoad(){
+  var roomId = getRoomId();
+  if(!roomId){ showToast('⚠️ まだ共有スペースがありません。先に保存してください'); return; }
+
+  var btn = document.getElementById('btn-cloud-load');
+  btn.disabled = true; btn.textContent = '🔄 読み込み中...';
+  setStatus('');
+
+  try {
+    var res = await fetch(API + '/' + roomId);
+    if(!res.ok) throw new Error('HTTP ' + res.status);
+    var data = await res.json();
+    if(data.texts) saveTexts(data.texts);
+    if(data.files) saveFiles(data.files);
+    render();
+    showToast('☁️ 最新データを読み込みました！');
+    if(data.updatedAt) setStatus('データ更新: ' + new Date(data.updatedAt).toLocaleString('ja-JP'));
+  } catch(e) {
+    showToast('⚠️ 読み込み失敗: ' + e.message);
+    setStatus('読み込みエラー');
+  }
+  btn.disabled = false; btn.textContent = '🔄 最新を読み込み';
+}
+
+/* ========== トースト ========== */
+function showToast(m){
+  var t = document.getElementById('toast');
+  t.textContent = m; t.classList.remove('show');
+  void t.offsetWidth; t.classList.add('show');
+  setTimeout(function(){ t.classList.remove('show'); }, 2000);
+}
+
+/* ========== ユーティリティ ========== */
+function esc(s){ return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function fmtSize(b){ if(b<1024)return b+' B'; if(b<1048576)return (b/1024).toFixed(1)+' KB'; return (b/1048576).toFixed(1)+' MB'; }
+function fileIcon(n){
+  var e=n.split('.').pop().toLowerCase();
+  if('jpg jpeg png gif webp svg bmp ico'.split(' ').indexOf(e)>=0) return '🖼️';
+  if(e==='pdf') return '📄';
+  if('doc docx'.split(' ').indexOf(e)>=0) return '📝';
+  if('xls xlsx csv'.split(' ').indexOf(e)>=0) return '📊';
+  if('mp4 mov avi webm'.split(' ').indexOf(e)>=0) return '🎬';
+  if('mp3 wav ogg m4a'.split(' ').indexOf(e)>=0) return '🎵';
+  if('zip rar 7z tar gz'.split(' ').indexOf(e)>=0) return '📦';
+  return '📎';
+}
+function isImg(n){ var e=n.split('.').pop().toLowerCase(); return 'jpg jpeg png gif webp svg bmp ico'.split(' ').indexOf(e)>=0; }
+
+/* ========== コピー（iOS/Android/PC全対応） ========== */
+function copyText(idx){
+  var ta = document.getElementById('slot-'+idx);
+  var text = ta ? ta.value : '';
+  if(!text){ showToast('⚠️ テキストが空です'); return; }
+  var texts = loadTexts(); texts[idx] = text; saveTexts(texts);
+
+  if(navigator.clipboard && navigator.clipboard.writeText && window.isSecureContext){
+    navigator.clipboard.writeText(text).then(function(){ showToast('✅ コピーしました！'); }).catch(function(){ fallbackCopy(text,idx); });
+    return;
+  }
+  fallbackCopy(text,idx);
+}
+function fallbackCopy(text,idx){
+  var helper = document.getElementById('copy-helper');
+  helper.style.position='fixed';helper.style.top='0';helper.style.left='0';
+  helper.style.opacity='0.01';helper.style.width='1px';helper.style.height='1px';
+  helper.value=text;helper.focus();helper.select();helper.setSelectionRange(0,text.length);
+  var ok=false;try{ok=document.execCommand('copy');}catch(e){}
+  helper.style.position='fixed';helper.style.top='-9999px';helper.style.left='-9999px';
+  helper.style.opacity='0';helper.blur();
+  if(ok){ showToast('✅ コピーしました！'); }
+  else {
+    showToast('⚠️ テキストを全選択しました。手動でコピーしてください');
+    var orig=document.getElementById('slot-'+idx);
+    if(orig){orig.focus();orig.select();orig.setSelectionRange(0,orig.value.length);}
+  }
+}
+
+/* ========== ローカル自動保存 ========== */
+function autoSave(idx){
+  var ta=document.getElementById('slot-'+idx);
+  if(!ta) return;
+  var texts=loadTexts();
+  while(texts.length<=idx) texts.push('');
+  texts[idx]=ta.value;
+  saveTexts(texts);
+  var badge=ta.closest('.card').querySelector('.badge');
+  if(badge) badge.textContent=ta.value.length+' 文字 / '+(loadFiles()[idx]||[]).length+' ファイル';
+}
+
+/* ========== ファイル操作 ========== */
+function readFile(file){
+  return new Promise(function(res,rej){
+    var r=new FileReader();r.onload=function(){res(r.result);};r.onerror=rej;r.readAsDataURL(file);
+  });
+}
+function addFiles(idx,fileList){
+  var files=loadFiles();while(files.length<=idx)files.push([]);
+  var promises=[];
+  for(var j=0;j<fileList.length;j++){
+    (function(f){
+      if(f.size>5*1024*1024){showToast('⚠️ 5MB超スキップ: '+f.name);return;}
+      promises.push(readFile(f).then(function(dataUrl){
+        files[idx].push({name:f.name,size:f.size,type:f.type,data:dataUrl});
+      }));
+    })(fileList[j]);
+  }
+  Promise.all(promises).then(function(){saveFiles(files);render();showToast('📎 ファイルを追加しました');});
+}
+function toBlob(dataUrl){
+  var parts=dataUrl.split(',');var mime=parts[0].match(/:(.*?);/)[1];
+  var raw=atob(parts[1]);var u8=new Uint8Array(raw.length);
+  for(var i=0;i<raw.length;i++)u8[i]=raw.charCodeAt(i);
+  return new Blob([u8],{type:mime});
+}
+function downloadFile(si,fi){
+  var f=loadFiles()[si][fi];var blob=toBlob(f.data);var url=URL.createObjectURL(blob);
+  var a=document.createElement('a');a.href=url;a.download=f.name;
+  document.body.appendChild(a);a.click();
+  setTimeout(function(){document.body.removeChild(a);URL.revokeObjectURL(url);},200);
+  showToast('⬇️ ダウンロード開始');
+}
+function saveToPhotos(si,fi){
+  var f=loadFiles()[si][fi];var blob=toBlob(f.data);
+  var file;try{file=new File([blob],f.name,{type:f.type||blob.type});}catch(e){file=blob;}
+  if(navigator.canShare&&navigator.canShare({files:[file]})){
+    navigator.share({files:[file],title:f.name}).then(function(){
+      showToast('📷 共有シートから保存できます');
+    }).catch(function(e){if(e.name!=='AbortError')openImageTab(f);});
+    return;
+  }
+  openImageTab(f);
+}
+function openImageTab(f){
+  var w=window.open('','_blank');
+  if(w){
+    w.document.write('<!DOCTYPE html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"><title>'+esc(f.name)+'</title><style>body{margin:0;display:flex;flex-direction:column;justify-content:center;align-items:center;min-height:100vh;background:#111;}img{max-width:100%;max-height:90vh;object-fit:contain;}p{color:#fff;text-align:center;padding:20px;font-family:sans-serif;font-size:14px;}</style></head><body><img src="'+f.data+'"><p>📷 画像を長押しして「写真に追加」を選んでください</p></body></html>');
+    w.document.close();showToast('📷 長押しで写真に保存できます');
+  }else{showToast('⚠️ ポップアップがブロックされました');}
+}
+function deleteFile(si,fi){
+  var files=loadFiles();if(!files[si])return;
+  files[si].splice(fi,1);saveFiles(files);render();showToast('🗑️ ファイルを削除しました');
+}
+
+/* ========== スロット追加・削除 ========== */
+function addSlot(){
+  var texts=loadTexts();texts.push('');saveTexts(texts);
+  var files=loadFiles();files.push([]);saveFiles(files);
+  render();showToast('➕ 新しいスロットを追加');
+  setTimeout(function(){window.scrollTo({top:document.body.scrollHeight,behavior:'smooth'});},100);
+}
+function deleteSlot(i){
+  var texts=loadTexts();texts.splice(i,1);if(!texts.length)texts.push('');saveTexts(texts);
+  var files=loadFiles();files.splice(i,1);if(!files.length)files.push([]);saveFiles(files);
+  render();showToast('🗑️ 削除しました');
+}
+
+/* ========== レンダリング ========== */
+function render(){
+  var app=document.getElementById('app');
+  var texts=loadTexts();var allFiles=loadFiles();
+  var colors=['#667eea','#43e97b','#f093fb','#f5576c','#38f9d7','#ffa751','#36d1dc'];
+  var html='';
+
+  for(var i=0;i<texts.length;i++){
+    var text=texts[i];var c=colors[i%colors.length];var sf=allFiles[i]||[];
+    html+='<div class="card">';
+    html+='<div class="card-header"><span class="card-title" style="color:'+c+'">📝 スロット '+(i+1)+'</span>';
+    html+='<span class="badge">'+text.length+' 文字 / '+sf.length+' ファイル</span></div>';
+    html+='<span class="slot-label">テキストを入力（改行もそのまま保存＆コピーされます）</span>';
+    html+='<textarea id="slot-'+i+'" placeholder="ここにテキストを入力..." oninput="autoSave('+i+')">'+esc(text)+'</textarea>';
+    html+='<div class="btn-group">';
+    html+='<button class="btn btn-copy" onclick="copyText('+i+')">📋 コピー</button>';
+    html+='<button class="btn btn-file" onclick="document.getElementById(\'fi-'+i+'\').click()">📎 追加</button>';
+    html+='<input type="file" id="fi-'+i+'" multiple style="display:none" onchange="addFiles('+i+',this.files);this.value=\'\';">';
+    html+='<button class="btn btn-delete" onclick="deleteSlot('+i+')">🗑️</button>';
+    html+='</div>';
+    html+='<div class="drop-zone" id="dz-'+i+'" onclick="document.getElementById(\'fi-'+i+'\').click()">';
+    html+='📂 ファイルをドラッグ＆ドロップ or クリック<br><span style="font-size:.75rem;color:#bbb;">画像・PDF・全ファイル対応（5MBまで）</span></div>';
+
+    if(sf.length){
+      html+='<div class="file-list">';
+      for(var fi=0;fi<sf.length;fi++){
+        var f=sf[fi];
+        html+='<div class="file-item">';
+        html+='<span class="file-icon">'+fileIcon(f.name)+'</span>';
+        html+='<div class="file-info"><div class="file-name">'+esc(f.name)+'</div><div class="file-size">'+fmtSize(f.size)+'</div>';
+        if(isImg(f.name)) html+='<img src="'+f.data+'" class="file-preview">';
+        html+='</div>';
+        html+='<div class="file-actions">';
+        if(isImg(f.name)) html+='<button class="file-btn file-btn-photo" onclick="saveToPhotos('+i+','+fi+')">📷 写真を保存</button>';
+        html+='<button class="file-btn file-btn-dl" onclick="downloadFile('+i+','+fi+')">⬇️ DL</button>';
+        html+='<button class="file-btn file-btn-del" onclick="deleteFile('+i+','+fi+')">🗑️</button>';
+        html+='</div></div>';
+      }
+      html+='</div>';
+    }
+    html+='</div>';
+  }
+
+  html+='<button class="btn btn-add" onclick="addSlot()" style="border-radius:16px;padding:16px;width:100%;">➕ 新しいスロットを追加</button>';
+  app.innerHTML=html;
+
+  for(var k=0;k<texts.length;k++){
+    (function(idx){
+      var dz=document.getElementById('dz-'+idx);if(!dz)return;
+      dz.addEventListener('dragover',function(e){e.preventDefault();dz.classList.add('drag-over');});
+      dz.addEventListener('dragleave',function(){dz.classList.remove('drag-over');});
+      dz.addEventListener('drop',function(e){e.preventDefault();dz.classList.remove('drag-over');addFiles(idx,e.dataTransfer.files);});
+    })(k);
+  }
+}
+
+/* ========== 初期化 ========== */
+(async function init(){
+  updateShareUrl();
+  window.addEventListener('hashchange', updateShareUrl);
+  var roomId = getRoomId();
+
+  if(roomId){
+    setStatus('☁️ クラウドからデータを読み込み中...');
+    try{
+      var res = await fetch(API+'/'+roomId);
+      if(res.ok){
+        var data = await res.json();
+        if(data.texts) saveTexts(data.texts);
+        if(data.files) saveFiles(data.files);
+        setStatus('☁️ 読み込み完了（'+new Date(data.updatedAt).toLocaleString('ja-JP')+'）');
+      } else {
+        setStatus('⚠️ クラウドデータが見つかりません');
+      }
+    }catch(e){
+      setStatus('⚠️ 読み込みエラー（ローカルデータを使用）');
+    }
+  } else {
+    setStatus('💡「保存（共有）」ボタンで共有スペースを作成できます');
+  }
+  render();
+})();
+</script>
+
+</body>
+</html>
